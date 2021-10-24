@@ -2,14 +2,14 @@ import numpy as np
 import hashlib
 import re
 
-filepath = 'D:/Users/jcaddick/aoc/'
+filepath = 'D:/Users/jcaddick/aoc/aoc/'
 
-def q1():
+def day_1_part_1():
     with open(filepath + 'input_1.txt') as f:
         input = f.read()
     return input.count('(') - input.count(')')
 
-def q2():
+def day_1_part_2():
     with open(filepath + 'input_1.txt') as f:
         input = f.read()
         total = 0
@@ -21,7 +21,7 @@ def q2():
             if total < 0:
                 return x + 1
 
-def q3():
+def day_2_part_1():
     with open(filepath + 'input_2.txt') as f:
         input = f.readlines()
         input = [list(map(int, x.strip('\n').split('x'))) for x in input]
@@ -31,7 +31,7 @@ def q3():
             total += 2 * l * w + 2 * w * h + 2 * h * l + min(l * w, w * h, l * h)
     return total
     
-def q4():
+def day_2_part_2():
     with open(filepath + 'input_2.txt') as f:
         input = f.readlines()
         input = [list(map(int, x.strip('\n').split('x'))) for x in input]
@@ -42,7 +42,7 @@ def q4():
     return total
 
 
-def q5():
+def day_3_part_1():
     with open(filepath + 'input_3.txt') as f:
         input = f.read()
     visited = [(0,0)]
@@ -61,7 +61,7 @@ def q5():
             visited.append((x, y))
     return len(visited)
 
-def q6():
+def day_3_part_2():
     with open(filepath + 'input_3.txt') as f:
         input = f.read()
     santa = [input[i] for i in range(len(input)) if i % 2 == 0]
@@ -94,7 +94,7 @@ def q6():
         robo_visited.add((x, y))
     return len(santa_visited.union(robo_visited))
 
-def q7():
+def day_4_part_1():
     coin = 0
     key = 'iwrupvqb'
     h = ''
@@ -103,7 +103,7 @@ def q7():
         h = hashlib.md5((key + str(coin)).encode()).hexdigest()
     return coin
 
-def q8():
+def day_4_part_2():
     coin = 0
     key = 'iwrupvqb'
     h = ''
@@ -112,7 +112,7 @@ def q8():
         h = hashlib.md5((key + str(coin)).encode()).hexdigest()
     return coin
 
-def q9():
+def day_5_part_1():
     with open(filepath + 'input_4.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
@@ -130,7 +130,7 @@ def q9():
             good += 1
     return good
 
-def q10():
+def day_5_part_2():
     with open(filepath + 'input_4.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
@@ -150,7 +150,7 @@ def q10():
             good += 1
     return good
 
-def q11():
+def day_6_part_1():
     with open(filepath + 'input_5.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
@@ -169,7 +169,7 @@ def q11():
             lights[a:c + 1, b:d + 1] = np.where(lights[a:c + 1, b:d + 1] == 1, 0, 1)
     return lights.sum()
 
-def q12():
+def day_6_part_2():
     with open(filepath + 'input_5.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
@@ -189,7 +189,7 @@ def q12():
             lights[a:c + 1, b:d + 1] += 2
     return lights.sum()
 
-def q13():
+def day_7_part_1():
     with open(filepath + 'input_6.txt') as f:
         input = f.readlines()
     input = [i.strip('\n').split(' ') for i in input]    
@@ -290,8 +290,10 @@ def q13():
                     input.remove(i)
         return wires['a']
 
+def day_7_part_2():
+    ...
 
-def q15():
+def day_8_part_1():
     with open(filepath + 'input_7.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
@@ -299,7 +301,10 @@ def q15():
     escaped = [len(re.escape(i)) for i in input]
     return input
 
-i = q15()
+
+def day_8_part_2():
+    ...
+
 
 # --- Day 9: All in a Single Night ---
 # Every year, Santa manages to deliver all of his presents in a single night.
@@ -322,6 +327,13 @@ i = q15()
 # The shortest of these is London -> Dublin -> Belfast = 605, and so the answer is 605 in this example.
 
 # What is the distance of the shortest route?
+
+def day_9_part_1():
+    ...
+
+
+def day_9_part_2():
+    ...
 
 # --- Day 10: Elves Look, Elves Say ---
 # Today, the Elves are playing a game called look-and-say. They take turns making sequences by reading aloud the previous sequence and using that reading as the next sequence. For example, 211 is read as "one two, two ones", which becomes 1221 (1 2, 2 1s).

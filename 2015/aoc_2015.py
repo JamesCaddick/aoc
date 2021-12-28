@@ -1,6 +1,7 @@
 import numpy as np
 import hashlib
 import re
+import networkx as nx
 
 filepath = 'D:/Users/jcaddick/aoc/aoc/'
 
@@ -113,7 +114,7 @@ def day_4_part_2():
     return coin
 
 def day_5_part_1():
-    with open(filepath + 'input_4.txt') as f:
+    with open(filepath + 'input_5.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
     good = 0
@@ -131,7 +132,7 @@ def day_5_part_1():
     return good
 
 def day_5_part_2():
-    with open(filepath + 'input_4.txt') as f:
+    with open(filepath + 'input_5.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
     good = 0
@@ -151,7 +152,7 @@ def day_5_part_2():
     return good
 
 def day_6_part_1():
-    with open(filepath + 'input_5.txt') as f:
+    with open(filepath + 'input_6.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
     lights = np.zeros((1000, 1000))
@@ -170,7 +171,7 @@ def day_6_part_1():
     return lights.sum()
 
 def day_6_part_2():
-    with open(filepath + 'input_5.txt') as f:
+    with open(filepath + 'input_6.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
     lights = np.zeros((1000, 1000))
@@ -190,7 +191,7 @@ def day_6_part_2():
     return lights.sum()
 
 def day_7_part_1():
-    with open(filepath + 'input_6.txt') as f:
+    with open(filepath + 'input_7.txt') as f:
         input = f.readlines()
     input = [i.strip('\n').split(' ') for i in input]    
     wires = {}
@@ -294,7 +295,7 @@ def day_7_part_2():
     ...
 
 def day_8_part_1():
-    with open(filepath + 'input_7.txt') as f:
+    with open(filepath + 'input_8.txt') as f:
         input = f.readlines()
     input = [i.strip('\n') for i in input]
     raw = [len(i) for i in input]
@@ -329,10 +330,23 @@ def day_8_part_2():
 # What is the distance of the shortest route?
 
 def day_9_part_1():
-    ...
+    
+    test_edges = [('London', 'Dublin', 463), ('London', 'Belfast', 518), ('Dublin', 'Belfast', 141)]
+    
+    with open(filepath + 'input_9.txt') as f:
+        input = f.readlines()
+        input = [x.strip('\n') for x in input]
+        edge_list = [(x.split(' ')[0], x.split(' ')[2], int(x.split(' ')[4])) for x in input]
+        G = nx.Graph()
+        G.add_weighted_edges_from(edge_list)
+        # G.add_weighted_edges_from(test_edges)
+        l = nx.approximation.traveling_salesman_problem(G, weight='weight', cycle=False)
+    return l
 
+i = day_9_part_1()
 
 def day_9_part_2():
+    
     ...
 
 # --- Day 10: Elves Look, Elves Say ---

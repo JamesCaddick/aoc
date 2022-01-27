@@ -93,5 +93,171 @@ A0016C880162017C3686B18A3D4780 is an operator packet that contains an operator p
 Decode the structure of your hexadecimal-encoded BITS transmission; what do you get if you add up the version numbers in all packets?
 '''
 
-with open('D:/Users/jcaddick/aoc/aoc/2021/input_day_15.txt') as f:
-    pass
+hex_to_binary = {'0': '0000',
+                 '1': '0001',
+                 '2': '0010',
+                 '3': '0011',
+                 '4': '0100',
+                 '5': '0101',
+                 '6': '0110',
+                 '7': '0111',
+                 '8': '1000',
+                 '9': '1001',
+                 'A': '1010',
+                 'B': '1011',
+                 'C': '1100',
+                 'D': '1101',
+                 'E': '1110',
+                 'F': '1111'}
+
+# header = version + type
+# version = 1st 3 bits
+# type = 2nd 3 bits
+# if type == 4, then literal
+# if type != 4, then operator
+# literal grouped into chunks of 4 bits, preceeded by either a 1 (another 4 bits to follow), or 0 (literal ends after this chunk)
+# operator followed by a 0 (next 15 bits encode a number for the length of bits in next sub packet) or a 1 (next 11 bits encode a number for the count of sub packets)
+# sub packets follow the same structure as packets
+
+def read_header(binary_str):
+    increment = 6
+    version = int(binary_str[:3], 2)
+    type_id = int(binary_str[3:6], 2)
+    return version, type_id, increment
+
+def read_operator(binary_str):
+    length_id = binary_str[0]
+    if length_id == '0':
+        length = int(binary_str[1:16], 2)
+        increment = 16
+    else:
+        length = int(binary_str[1:12], 2)
+        increment = 12
+    return length_id, length, increment
+
+def read_literal(binary_str):
+    increment = (binary_str[::5].index('0') + 1) * 5
+    binary_literal = binary_str[:increment + 1]
+    literal = int(''.join([binary_literal[i * 5 + 1: i * 5 + 5] for i in range(increment)]), 2)
+    return literal, increment
+
+def decode_hex(hex_str):
+    for k, v in hex_to_binary.items():
+        hex_str = hex_str.replace(k, v)
+    return hex_str
+
+with open('D:/Users/jcaddick/aoc/aoc/2021/input_day_16.txt') as f:
+    data = f.read()
+    
+# # data = decode_hex('9C0141080250320F1802104A08')
+# data = decode_hex(data)
+# pointer = 0
+# version_sum = 0
+# expression = []
+# while pointer < len(data) - 1:
+#     if '1' not in data[pointer:]:
+#         break
+#     version, type_id, increment = read_header(data[pointer:])
+#     version_sum += version
+#     pointer += increment
+#     if type_id != 4:
+#         expression.append(operator_dict[type_id])
+#     if type_id == 4:
+#         literal, increment = read_literal(data[pointer:])
+#         pointer += increment
+#         expression.append(literal)
+#     else:
+#         length_id, length, increment = read_operator(data[pointer:])
+#         pointer += increment
+        
+# print(f'the answer is {version_sum}')
+
+'''
+--- Part Two ---
+Now that you have the structure of your transmission decoded, you can calculate the value of the expression it represents.
+
+Literal values (type ID 4) represent a single number as described above. The remaining type IDs are more interesting:
+
+Packets with type ID 0 are sum packets - their value is the sum of the values of their sub-packets. If they only have a single sub-packet, their value is the value of the sub-packet.
+Packets with type ID 1 are product packets - their value is the result of multiplying together the values of their sub-packets. If they only have a single sub-packet, their value is the value of the sub-packet.
+Packets with type ID 2 are minimum packets - their value is the minimum of the values of their sub-packets.
+Packets with type ID 3 are maximum packets - their value is the maximum of the values of their sub-packets.
+Packets with type ID 5 are greater than packets - their value is 1 if the value of the first sub-packet is greater than the value of the second sub-packet; otherwise, their value is 0. These packets always have exactly two 
+sub-packets.
+Packets with type ID 6 are less than packets - their value is 1 if the value of the first sub-packet is less than the value of the second sub-packet; otherwise, their value is 0. These packets always have exactly two sub-packets.
+Packets with type ID 7 are equal to packets - their value is 1 if the value of the first sub-packet is equal to the value of the second sub-packet; otherwise, their value is 0. These packets always have exactly two sub-packets.
+Using these rules, you can now work out the value of the outermost packet in your BITS transmission.
+
+For example:
+
+C200B40A82 finds the sum of 1 and 2, resulting in the value 3.
+880086C3E88112 finds the minimum of 7, 8, and 9, resulting in the value 7.
+CE00C43D881120 finds the maximum of 7, 8, and 9, resulting in the value 9.
+D8005AC2A8F0 produces 1, because 5 is less than 15.
+F600BC2D8F produces 0, because 5 is not greater than 15.
+9C005AC2F8F0 produces 0, because 5 is not equal to 15.
+9C0141080250320F1802104A08 produces 1, because 1 + 3 = 2 * 2.
+What do you get if you evaluate the expression represented by your hexadecimal-encoded BITS transmission?
+'''
+
+def apply_function(args, type_id):
+    result = 0
+    if type_id == 0:
+        result = sum(args)
+    elif type_id == 1:
+        result = 1
+        for a in args:
+            result *= a
+    elif type_id == 2:
+        result = min(args)
+    elif type_id == 3:
+        result = max(args)
+    elif type_id == 4:
+        result = args
+    elif type_id == 5:
+        result = 1 if args[0] > args[1] else 0
+    elif type_id == 6:
+        result = 1 if args[0] < args[1] else 0
+    elif type_id == 7:
+        result = 1 if args[0] == args[1] else 0
+    return result
+
+def decode_again(binary):
+    args = []
+    _, op, increment = read_header(binary)
+    parent_op = op
+    binary = binary[increment:]
+    length_id, length, increment = read_operator(binary)
+    binary = binary[increment:]
+    if length_id == '0':
+        bit_string = binary[:length]
+        binary = binary[length:]
+        while bit_string:
+            _, op, increment = read_header(bit_string)
+            if op == 4:
+                bit_string = bit_string[increment:]
+                literal, increment = read_literal(bit_string)
+                bit_string = bit_string[increment:]
+                args.append(literal)
+            else:
+                arg, bit_string = decode_again(bit_string)
+                args.append(arg)
+    elif length_id == '1':
+        counter = 0
+        while counter < length and '1' in binary:
+            _, op, increment = read_header(binary)
+            if op == 4:
+                counter += 1
+                binary = binary[increment:]
+                literal, increment = read_literal(binary)
+                binary = binary[increment:]
+                args.append(literal)
+            elif '1' in binary:
+                arg, binary = decode_again(binary)
+                counter += 1
+                args.append(arg)
+    return apply_function(args, parent_op), binary
+
+data = decode_hex(data)    
+part2, _ = decode_again(data)
+print('the answer is ', part2)

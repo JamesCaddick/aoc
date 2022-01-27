@@ -78,3 +78,54 @@ def flash_lights(arr, x, y, coords_cache={}):
                                 result += flash_lights(arr, x + 1, y - 1, coords_cache)
                     
     return result
+
+def decode(binary_str, first_pass=True, length_id=1, length=1, type_id=1):
+    print(f'{binary_str}, {length_id}, {length}')
+    args = []
+    if first_pass:
+        _, type_id, increment = read_header(binary_str)
+        binary_str = binary_str[increment:]
+        length_id, length, increment = read_operator(binary_str)
+        binary_str = binary_str[increment:]
+    if length_id == '0':
+        sub_string = binary_str[:length]
+        binary_str = binary_str[length:]
+        while sub_string:
+            if '1' not in binary_str:
+                break
+            _, new_type_id, increment = read_header(sub_string)
+            sub_string = sub_string[increment:]
+            if new_type_id == 4:
+                literal, increment = read_literal(sub_string)
+                sub_string = sub_string[increment:]
+                args.append(literal)
+            else:
+                length_id, length, increment = read_operator(sub_string)
+                sub_string = sub_string[increment:]
+                if not sub_string:
+                    break
+                result, new_str = decode(sub_string, False, length_id, length, new_type_id)
+                sub_string = new_str
+                args.append(result)
+    elif length_id == '1':
+        counter = 0
+        while counter < length:
+            if '1' not in binary_str:
+                break
+            _, new_type_id, increment = read_header(binary_str)
+            binary_str = binary_str[increment:]
+            if new_type_id == 4:
+                literal, increment = read_literal(binary_str)
+                binary_str = binary_str[increment:]
+                args.append(literal)
+                counter += 1
+            else:
+                counter += 1
+                length_id, length, increment = read_operator(binary_str)
+                binary_str = binary_str[increment:]
+                result, new_str = decode(binary_str, False, length_id, length, new_type_id)
+                binary_str = new_str
+                args.append(result)
+    print(args)
+    args = apply_function(args, type_id)
+    return args, binary_str

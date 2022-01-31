@@ -169,14 +169,99 @@ To begin, get your puzzle input.
 # leftmost explodes if in nested set of 4 pairs
 # > 10 explodes
 
+# from ast import literal_eval
+import re
+from math import ceil, floor
+
 with open('D:/Users/jcaddick/aoc/aoc/2021/input_day_18.txt') as f:
     data = f.read().split()
 
-def explode(line):
+def explode(addition):
     pass
 
-def split(line):
+def split(addition):
     pass
 
-def add(line):
+def add(addition):
     pass
+
+def check_explosions(addition):
+    counter = 0
+    for i, char in enumerate(addition):
+        if char == '[':
+            counter += 1
+        elif char == ']':
+            counter -= 1
+        if counter > 4:
+            if len(re.findall('\d{2}', addition)) == 1:
+                return True, addition[i:i+6]
+            elif len(re.findall('\d{2}', addition)) == 2:
+                return True, addition[i:i+7]
+            else:
+                return True, addition[i:i+5]
+    return False, ''
+
+def explode(result, addition):
+    pttn = '\d*\W*' + re.escape(result) + '\W*\d*'
+    exploding_chars = re.findall(pttn, addition)[0]
+    if exploding_chars[0] in '1234567890':
+        left = int(exploding_chars[0])
+    if exploding_chars[-1] in '1234567890':
+        right = int(exploding_chars[-1])
+    left_pair, right_pair = list(map(int, re.findall('\d+', result)))
+    if exploding_chars[0] not in '1234567890':
+        right = str(right + right_pair)
+        post_explosion = exploding_chars[:-1].replace(result, '0') + right
+    elif exploding_chars[-1] not in '1234567890':
+        left = str(left + left_pair)
+        post_explosion = left + exploding_chars[1:].replace(result, '0')
+    else:
+        left = str(left + left_pair)
+        right = str(right + right_pair)
+        post_explosion = left + exploding_chars[1:-1].replace(result, '0') + right
+    addition = addition.replace(exploding_chars, post_explosion)
+    return addition
+
+test = ['[1,1]',
+        '[2,2]',
+        '[3,3]',
+        '[4,4]',
+        '[5,5]',
+          '[6,6]']
+
+test2 = ['[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]',
+         '[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]',
+         '[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]',
+         '[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]',
+         '[7,[5,[[3,8],[1,4]]]]',
+         '[[2,[2,2]],[8,[8,1]]]',
+         '[2,9]',
+         '[1,[[[9,3],9],[[9,0],[0,7]]]]',
+         '[[[5,[7,4]],7],1]',
+         '[[[[4,2],2],6],[8,7]]']
+
+addition = test2[0]
+for line in test2[1:]:
+    addition = '[' + addition + ',' + line + ']'
+    check = True
+    while check or len(to_split) > 0:
+        # print('start: ', addition)
+        check, result = check_explosions(addition)
+        if check:
+            opens = len(re.findall('\[', addition))
+            closes = len(re.findall('\]', addition))
+            print(addition, opens, closes, result)
+            addition = explode(result, addition)
+            opens = len(re.findall('\[', addition))
+            closes = len(re.findall('\]', addition))
+            print(addition, opens, closes, result)
+        else:
+            to_split = re.findall('\d\d', addition)
+            if len(to_split) > 0:
+                to_split = to_split[0]
+                after_split = '[' + str(floor(int(to_split) / 2)) + ',' + str(ceil(int(to_split) / 2)) + ']'
+                addition = addition.replace(to_split, after_split)
+                check, result = check_explosions(addition)
+            to_split = re.findall('\d\d', addition)
+        # print('end: ', addition)
+    # print('end line: ', addition)

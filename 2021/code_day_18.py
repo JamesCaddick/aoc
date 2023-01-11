@@ -166,24 +166,11 @@ Add up all of the snailfish numbers from the homework assignment in the order th
 To begin, get your puzzle input.
 '''
 
-# leftmost explodes if in nested set of 4 pairs
-# > 10 explodes
-
-# from ast import literal_eval
 import re
 from math import ceil, floor
 
 with open('D:/Users/jcaddick/aoc/aoc/2021/input_day_18.txt') as f:
     data = f.read().split()
-
-def explode(addition):
-    pass
-
-def split(addition):
-    pass
-
-def add(addition):
-    pass
 
 def check_explosions(addition):
     counter = 0
@@ -193,41 +180,41 @@ def check_explosions(addition):
         elif char == ']':
             counter -= 1
         if counter > 4:
-            if len(re.findall('\d{2}', addition)) == 1:
-                return True, addition[i:i+6]
-            elif len(re.findall('\d{2}', addition)) == 2:
-                return True, addition[i:i+7]
+            if len(re.findall('\d{2}', addition[i:i+7])) == 1:
+                increment = 6
+            elif len(re.findall('\d{2}', addition[i:i+7])) == 2:
+                increment = 7
             else:
-                return True, addition[i:i+5]
-    return False, ''
+                increment = 5
+            before = addition[:i]
+            result = addition[i:i+increment]
+            after = addition[i+increment:]
+            return True, before, result, after
+    return False, '', '', ''
 
-def explode(result, addition):
-    pttn = '\d*\W*' + re.escape(result) + '\W*\d*'
-    exploding_chars = re.findall(pttn, addition)[0]
-    if exploding_chars[0] in '1234567890':
-        left = int(exploding_chars[0])
-    if exploding_chars[-1] in '1234567890':
-        right = int(exploding_chars[-1])
-    left_pair, right_pair = list(map(int, re.findall('\d+', result)))
-    if exploding_chars[0] not in '1234567890':
-        right = str(right + right_pair)
-        post_explosion = exploding_chars[:-1].replace(result, '0') + right
-    elif exploding_chars[-1] not in '1234567890':
-        left = str(left + left_pair)
-        post_explosion = left + exploding_chars[1:].replace(result, '0')
-    else:
-        left = str(left + left_pair)
-        right = str(right + right_pair)
-        post_explosion = left + exploding_chars[1:-1].replace(result, '0') + right
-    addition = addition.replace(exploding_chars, post_explosion)
-    return addition
+def explode(before, result, after, addition):
+    left_num = re.findall('(\d+)\W+$', before)[0] if len(re.findall('(\d+)\W+$', before)) > 0 else ''
+    left_chars = re.findall('\d+(\W+$)', before)[0] if len(re.findall('\d+(\W+$)', before)) > 0 else ''
+    right_num = re.findall('^\W+(\d+)', after)[0] if len(re.findall('^\W+(\d+)', after)) > 0 else ''
+    right_chars = re.findall('(^\W+)\d+', after)[0] if len(re.findall('(^\W+)\d+', after)) > 0 else ''
+    LEFT_NUM, RIGHT_NUM = re.findall('\d+', result)
+    left = str(int(left_num) + int(LEFT_NUM)) if left_num else ''
+    right = str(int(right_num) + int(RIGHT_NUM)) if right_num else ''
+    i = len(before) - len(left_num) - len(left_chars)
+    before = before[:i] + left + left_chars
+    i = len(right_num) + len(right_chars)
+    after = right_chars + right + after[i:]
+    return before + '0' + after
 
-test = ['[1,1]',
-        '[2,2]',
-        '[3,3]',
-        '[4,4]',
-        '[5,5]',
-          '[6,6]']
+def get_magnitude(n):
+    pairs = re.findall('\[\d+,\d+\]', n)
+    while len(pairs) > 0:
+        for pair in pairs:
+            left, right = re.findall('\d+', pair)
+            replacement = str(int(left) * 3 + int(right) * 2)
+            n = n.replace(pair, replacement, 1)
+        pairs = re.findall('\[\d+,\d+\]', n)
+    return n
 
 test2 = ['[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]',
          '[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]',
@@ -240,28 +227,82 @@ test2 = ['[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]',
          '[[[5,[7,4]],7],1]',
          '[[[[4,2],2],6],[8,7]]']
 
-addition = test2[0]
-for line in test2[1:]:
+test3 = ['[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]',
+         '[[[5,[2,8]],4],[5,[[9,9],0]]]',
+         '[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]',
+         '[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]',
+         '[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]',
+         '[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]',
+         '[[[[5,4],[7,7]],8],[[8,3],8]]',
+         '[[9,3],[[9,9],[6,[4,9]]]]',
+         '[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]',
+         '[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]']
+
+addition = data[0]
+for line in data[1:]:
     addition = '[' + addition + ',' + line + ']'
     check = True
-    while check or len(to_split) > 0:
-        # print('start: ', addition)
-        check, result = check_explosions(addition)
+    pre_split = []
+    while check or len(pre_split) > 0:
+        check, before, result, after = check_explosions(addition)
         if check:
-            opens = len(re.findall('\[', addition))
-            closes = len(re.findall('\]', addition))
-            print(addition, opens, closes, result)
-            addition = explode(result, addition)
-            opens = len(re.findall('\[', addition))
-            closes = len(re.findall('\]', addition))
-            print(addition, opens, closes, result)
+            addition = explode(before, result, after, addition)
         else:
-            to_split = re.findall('\d\d', addition)
-            if len(to_split) > 0:
-                to_split = to_split[0]
-                after_split = '[' + str(floor(int(to_split) / 2)) + ',' + str(ceil(int(to_split) / 2)) + ']'
-                addition = addition.replace(to_split, after_split)
-                check, result = check_explosions(addition)
-            to_split = re.findall('\d\d', addition)
-        # print('end: ', addition)
-    # print('end line: ', addition)
+            pre_split = re.findall('\d\d', addition)
+            if len(pre_split) > 0:
+                pre_split = pre_split[0]
+                post_split = '[' + str(floor(int(pre_split) / 2)) + ',' + str(ceil(int(pre_split) / 2)) + ']'
+                addition = addition.replace(pre_split, post_split, 1)
+                check, before, result, after = check_explosions(addition)
+            pre_split = re.findall('\d\d', addition)
+    
+print(get_magnitude(addition))
+
+'''
+--- Part Two ---
+You notice a second question on the back of the homework assignment:
+
+What is the largest magnitude you can get from adding only two of the snailfish numbers?
+
+Note that snailfish addition is not commutative - that is, x + y and y + x can produce different results.
+
+Again considering the last example homework assignment above:
+
+[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+[[[5,[2,8]],4],[5,[[9,9],0]]]
+[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
+[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
+[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
+[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
+[[[[5,4],[7,7]],8],[[8,3],8]]
+[[9,3],[[9,9],[6,[4,9]]]]
+[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
+[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]
+The largest magnitude of the sum of any two snailfish numbers in this list is 3993. This is the magnitude of 
+[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]] + [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]], which reduces to [[[[7,8],[6,6]],[[6,0],[7,7]]],[[[7,8],[8,8]],[[7,9],[0,6]]]].
+
+What is the largest magnitude of any sum of two different snailfish numbers from the homework assignment?
+'''
+
+from itertools import permutations
+perms = permutations(data, 2)
+magnitudes = []
+for perm in perms:
+    a, b = perm
+    addition = '[' + a + ',' + b + ']'
+    check = True
+    pre_split = []
+    while check or len(pre_split) > 0:
+        check, before, result, after = check_explosions(addition)
+        if check:
+            addition = explode(before, result, after, addition)
+        else:
+            pre_split = re.findall('\d\d', addition)
+            if len(pre_split) > 0:
+                pre_split = pre_split[0]
+                post_split = '[' + str(floor(int(pre_split) / 2)) + ',' + str(ceil(int(pre_split) / 2)) + ']'
+                addition = addition.replace(pre_split, post_split, 1)
+                check, before, result, after = check_explosions(addition)
+            pre_split = re.findall('\d\d', addition)
+    magnitudes.append(int(get_magnitude(addition)))
+print(max(magnitudes))

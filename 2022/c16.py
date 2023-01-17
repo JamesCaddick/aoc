@@ -1,32 +1,22 @@
 import re
-from copy import copy
 import heapq
+from itertools import combinations
 
-with open('i16t.txt') as f:
+with open('i16.txt') as f:
     data = f.read().split('\n')
 
 node_pttn = r'Valve ([A-Z]+)'
 flow_pttn = r'rate=([0-9]+)'
 child_pttn = r'[A-Z]{2}'
 
-nodes = []
-flows = []
-kids = []
+network = {}
+valves = {}
 for d in data:
     node = re.search(node_pttn, d)[1]
     flow = re.search(flow_pttn, d)[1]
     children = re.findall(child_pttn, d)[1:]
-    nodes.append(node)
-    flows.append(flow)
-    kids.append(children)
-    
-network = {k:v for k, v in zip(nodes, kids)}
-node_flow = {k:[int(v), True] for k, v in zip(nodes, flows)}
-
-def get_weighted_distances(node):
-    weighted_distances = {k: dijkstra(k, node) * node_flow[k][0] * node_flow[k][1] for k, v in network.items()}
-    # print(f'{node}: {weighted_distances}, {sum(weighted_distances.values())}')
-    return sum(weighted_distances.values())
+    network[node] = children
+    valves[node] = int(flow)
     
 def get_neighbours(node):
     return network[node]
@@ -61,16 +51,49 @@ def dijkstra(origin, destination):
     if destination in tentative:
         return tentative[destination]
     
-time = 0
-current_node = 'DD'
-# while time < 29:
-node_flow['DD'][1] = False
+memo = {}
+def search_network(time, node, valve_state):
+    # if have seen state before, return state from memo
+    if (time, node, valve_state) in memo:
+        return memo[(time, node, valve_state)]
+    max_pressure = 0
+    # check each non-zero node
+    for i, new_node in enumerate(non_zero_nodes):
+        # if the node is already open or node is same as current node then skip it
+        if valve_state[i] or new_node == node:
+            continue
+        # calculate remaining time after moving to node and opening it
+        remaining = time - distances[tuple(sorted([node, new_node]))] - 1
+        # if not enough time to reach the node then skip
+        if remaining <= 0:
+            continue
+        # change valve state
+        new_valve_state = tuple([1 if j == i else state for j, state in enumerate(valve_state)])
+        # calculate new max pressure
+        max_pressure = max(max_pressure, search_network(remaining, new_node, new_valve_state) + remaining * valves[new_node])
+    # update memo
+    memo[(time, node, valve_state)] = max_pressure
+    return max_pressure
+    
+# create dictionary of distances between nodes with non-zero flow rates (and start node)
+non_zero_nodes = [node for node, flow in valves.items() if flow > 0 or node == 'AA']
+combos = list(combinations(non_zero_nodes, 2))
+distances = {tuple(sorted(combo)):dijkstra(combo[0], combo[1]) for combo in combos}
 
-# find candidates
-candidates = get_neighbours(current_node)
-# check distance between each candidate and every other closed node (that is reachable in 28 mins or less)
-distances = {candidate:get_weighted_distances(candidate) for candidate in candidates}
-# select the candidate with the lowest weighted distance
-chosen_candidate = min(distances, key=distances.get)
+# set valve state for nodes
+valve_state = tuple([0] * len(network))
 
-print(chosen_candidate)
+# run search
+print(search_network(30, 'AA', valve_state))
+
+# part 2
+max_partnership = 0
+all_nodes_except_aa = set(non_zero_nodes) - set('AA')
+for n in range(0, len(all_nodes_except_aa) + 1):
+    for combo in combinations(all_nodes_except_aa, n):
+        elephant = all_nodes_except_aa - set(combo)
+        me_valve_state = tuple([1 if node in elephant else 0 for node in non_zero_nodes])
+        elephant_valve_state = tuple([1 if node in combo else 0 for node in non_zero_nodes])
+        max_partnership = max(max_partnership, search_network(26, 'AA', me_valve_state) + search_network(26, 'AA', elephant_valve_state))
+
+print(max_partnership)
